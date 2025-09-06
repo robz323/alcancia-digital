@@ -1,31 +1,59 @@
-# Project Starter
+# Alcancía Digital (ElizaOS + Telegram + Starknet)
 
-This is the starter template for ElizaOS projects.
+Agente que integra Telegram con Starknet para crear y operar una "alcancía digital" (wallet invisible) por usuario, sin exponer claves privadas.
 
 ## Features
 
 - Pre-configured project structure for ElizaOS development
-- Comprehensive testing setup with component and e2e tests
 - Default character configuration with plugin integration
 - Example service, action, and provider implementations
 - TypeScript configuration for optimal developer experience
 - Built-in documentation and examples
 
-## Getting Started
+## Requisitos
+
+- Bun >= 1.0
+- Node 18+
+- `TELEGRAM_BOT_TOKEN` (Bot de Telegram)
+- `STARKNET_RPC_URL` (Sepolia/Mainnet)
+- `SECRET_SALT` para derivación determinista de claves por usuario
+
+## Configuración rápida
 
 ```bash
-# Create a new project
-elizaos create -t project my-project
-# Dependencies are automatically installed and built
+# Instalar dependencias
+bun install
 
-# Navigate to the project directory
-cd my-project
+# Variables de entorno (.env)
+cat >> .env << 'EOF'
+TELEGRAM_BOT_TOKEN=xxx
+STARKNET_RPC_URL=xxx
+SECRET_SALT=$(openssl rand -hex 16)
+STARKNET_ACCOUNT_CLASS_HASH=0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f
+STARKNET_ACCOUNT_VARIANT=oz
+STARKNET_ETH_TOKEN_ADDRESS=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+IGNORE_LLM=1
+IGNORE_BOOTSTRAP=1
+EOF
 
-# Start development immediately
-elizaos dev
+# Iniciar en modo desarrollo (Telegram)
+bun run dev
 ```
 
-## Development
+## Comandos del agente (Telegram)
+
+- "crear alcancía" — Crea tu alcancía digital (wallet invisible)
+- "dirección" — Muestra la dirección de tu alcancía
+- "balance" o "saldo" — Muestra balance de ETH
+- "enviar <monto> <token?> a <0x...>" — Enviar tokens
+- "crear token" — Desplegar meme token (wrapper)
+
+Notas:
+- La alcancía se liga 1:1 a tu usuario de Telegram (`entityId`).
+- Clave privada derivada de `SECRET_SALT + entityId` → dirección estable entre reinicios.
+- El deploy real de la cuenta requiere fondos para comisiones; la dirección se puede mostrar aunque no esté desplegada.
+
+## Desarrollo
 
 ```bash
 # Start development with hot-reloading (recommended)
@@ -114,9 +142,31 @@ export default new ProjectTestSuite();
 
 The test utilities in `__tests__/utils/` provide helper functions to simplify writing tests.
 
-## Configuration
+## Plugins y arquitectura
 
-Customize your project by modifying:
+- `@elizaos/plugin-telegram`: cliente de Telegram
+- `starter plugin` (`src/plugin.ts`):
+  - Router de comandos (sin pasar por LLM) con dedupe/rate limit
+  - Acciones personalizadas:
+    - `CREATE_INVISIBLE_STARKNET_ACCOUNT`
+    - `SHOW_INVISIBLE_ACCOUNT_ADDRESS`
+    - `SHOW_INVISIBLE_ACCOUNT_BALANCE`
+    - `TRANSFER_STARKNET_TOKENS_INVISIBLE` (wrapper de `TRANSFER_TOKEN`)
+    - `DEPLOY_MEME_TOKEN_INVISIBLE` (wrapper de `DEPLOY_STARKNET_UNRUGGABLE_MEME_TOKEN`)
+- `@elizaos/plugin-starknet`: capacidades on-chain subyacentes
+- `@elizaos/plugin-sql`: soporte de almacenamiento del core
+- `@elizaos/plugin-bootstrap`: embeddings (desactivar con `IGNORE_BOOTSTRAP=1`)
+- Plugins LLM opcionales (si `IGNORE_LLM=0` y hay API keys): Anthropic/OpenAI/OpenRouter/Google/Ollama
 
-- `src/index.ts` - Main entry point
-- `src/character.ts` - Character definition
+## Capacidades del agente
+
+- Crear alcancía digital (wallet invisible)
+- Mostrar dirección
+- Enviar tokens
+- Estrategias y gestión financiera (requiere habilitar LLM)
+
+## Producción (recomendado)
+
+- Persistir claves cifradas (o usar KMS) en lugar de solo derivación determinista.
+- Monitoreo de gas/fees y manejo de errores.
+- Habilitar LLM si deseas respuestas de estrategia financiera.
