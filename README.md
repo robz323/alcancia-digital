@@ -1,6 +1,6 @@
 # Alcancía Digital (ElizaOS + Telegram + Starknet)
 
-Agente que integra Telegram con Starknet para crear y operar una "alcancía digital" (wallet invisible) por usuario, sin exponer claves privadas.
+Agente que integra Telegram con Starknet para crear y operar una "alcancía digital" (wallet invisible) por usuario.
 
 ## Features
 
@@ -14,29 +14,24 @@ Agente que integra Telegram con Starknet para crear y operar una "alcancía digi
 
 - Bun >= 1.0
 - Node 18+
-- `TELEGRAM_BOT_TOKEN` (Bot de Telegram)
-- `STARKNET_RPC_URL` (Sepolia/Mainnet)
-- `SECRET_SALT` para derivación determinista de claves por usuario
 
-## Configuración rápida
+## Variables de entorno (.env)
+
+Nombres requeridos (solo listado):
+
+- ANTHROPIC_API_KEY
+- TELEGRAM_BOT_TOKEN
+- STARKNET_ADDRESS
+- STARKNET_PRIVATE_KEY
+- STARKNET_RPC_URL
+- SECRET_SALT
+- STARKNET_ACCOUNT_VARIANT
+- STARKNET_ACCOUNT_CLASS_HASH
+
+## Instalación y ejecución
 
 ```bash
-# Instalar dependencias
 bun install
-
-# Variables de entorno (.env)
-cat >> .env << 'EOF'
-TELEGRAM_BOT_TOKEN=xxx
-STARKNET_RPC_URL=xxx
-SECRET_SALT=$(openssl rand -hex 16)
-STARKNET_ACCOUNT_CLASS_HASH=0x061dac032f228abef9c6626f995015233097ae253a7f72d68552db02f2971b8f
-STARKNET_ACCOUNT_VARIANT=oz
-STARKNET_ETH_TOKEN_ADDRESS=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
-IGNORE_LLM=1
-IGNORE_BOOTSTRAP=1
-EOF
-
-# Iniciar en modo desarrollo (Telegram)
 bun run dev
 ```
 
@@ -49,9 +44,8 @@ bun run dev
 - "crear token" — Desplegar meme token (wrapper)
 
 Notas:
-- La alcancía se liga 1:1 a tu usuario de Telegram (`entityId`).
-- Clave privada derivada de `SECRET_SALT + entityId` → dirección estable entre reinicios.
-- El deploy real de la cuenta requiere fondos para comisiones; la dirección se puede mostrar aunque no esté desplegada.
+- La alcancía se liga 1:1 a tu usuario de Telegram.
+- Dirección estable entre reinicios (derivación determinista con `SECRET_SALT`).
 
 ## Desarrollo
 
