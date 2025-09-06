@@ -33,6 +33,11 @@ export const character: Character = {
       : []),
     ...(process.env.TELEGRAM_BOT_TOKEN?.trim() ? ['@elizaos/plugin-telegram'] : []),
 
+    // Starknet plugin (requires RPC URL and private key)
+    ...(process.env.STARKNET_RPC_URL?.trim() && process.env.STARKNET_PRIVATE_KEY?.trim()
+      ? ['@elizaos/plugin-starknet']
+      : []),
+
     // Bootstrap plugin
     ...(!process.env.IGNORE_BOOTSTRAP ? ['@elizaos/plugin-bootstrap'] : []),
   ],
