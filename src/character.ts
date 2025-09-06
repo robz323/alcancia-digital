@@ -13,15 +13,15 @@ export const character: Character = {
     '@elizaos/plugin-sql',
 
     // Text-only plugins (no embedding support)
-    ...(process.env.ANTHROPIC_API_KEY?.trim() ? ['@elizaos/plugin-anthropic'] : []),
-    ...(process.env.OPENROUTER_API_KEY?.trim() ? ['@elizaos/plugin-openrouter'] : []),
+    ...(!process.env.IGNORE_LLM && process.env.ANTHROPIC_API_KEY?.trim() ? ['@elizaos/plugin-anthropic'] : []),
+    ...(!process.env.IGNORE_LLM && process.env.OPENROUTER_API_KEY?.trim() ? ['@elizaos/plugin-openrouter'] : []),
 
     // Embedding-capable plugins (optional, based on available credentials)
-    ...(process.env.OPENAI_API_KEY?.trim() ? ['@elizaos/plugin-openai'] : []),
-    ...(process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ? ['@elizaos/plugin-google-genai'] : []),
+    ...(!process.env.IGNORE_LLM && process.env.OPENAI_API_KEY?.trim() ? ['@elizaos/plugin-openai'] : []),
+    ...(!process.env.IGNORE_LLM && process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ? ['@elizaos/plugin-google-genai'] : []),
 
     // Ollama as fallback (only if no main LLM providers are configured)
-    ...(process.env.OLLAMA_API_ENDPOINT?.trim() ? ['@elizaos/plugin-ollama'] : []),
+    ...(!process.env.IGNORE_LLM && process.env.OLLAMA_API_ENDPOINT?.trim() ? ['@elizaos/plugin-ollama'] : []),
 
     // Platform plugins
     ...(process.env.DISCORD_API_TOKEN?.trim() ? ['@elizaos/plugin-discord'] : []),
@@ -33,10 +33,8 @@ export const character: Character = {
       : []),
     ...(process.env.TELEGRAM_BOT_TOKEN?.trim() ? ['@elizaos/plugin-telegram'] : []),
 
-    // Starknet plugin (requires RPC URL and private key)
-    ...(process.env.STARKNET_RPC_URL?.trim() && process.env.STARKNET_PRIVATE_KEY?.trim()
-      ? ['@elizaos/plugin-starknet']
-      : []),
+    // Starknet plugin (requires RPC URL only; claves por cuenta son manejadas internamente)
+    ...(process.env.STARKNET_RPC_URL?.trim() ? ['@elizaos/plugin-starknet'] : []),
 
     // Bootstrap plugin
     ...(!process.env.IGNORE_BOOTSTRAP ? ['@elizaos/plugin-bootstrap'] : []),
