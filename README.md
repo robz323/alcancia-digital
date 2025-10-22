@@ -17,16 +17,28 @@ Agente que integra Telegram con Starknet para crear y operar una "alcancía digi
 
 ## Variables de entorno (.env)
 
-Nombres requeridos (solo listado):
-
+### Core ElizaOS
 - ANTHROPIC_API_KEY
 - TELEGRAM_BOT_TOKEN
+
+### Starknet Integration
 - STARKNET_ADDRESS
 - STARKNET_PRIVATE_KEY
 - STARKNET_RPC_URL
 - SECRET_SALT
 - STARKNET_ACCOUNT_VARIANT
 - STARKNET_ACCOUNT_CLASS_HASH
+
+### Capa Network (Opcional)
+- CAPA_API_URL
+- CAPA_PARTNER_ID
+- CAPA_API_KEY
+- CAPA_SECRET_KEY
+- CAPA_ENVIRONMENT (sandbox/production)
+- CAPA_DEFAULT_FIAT (MXN, COP, USD, etc.)
+- CAPA_DEFAULT_CRYPTO (USDC, ETH, etc.)
+- CAPA_DEFAULT_BLOCKCHAIN (ethereum, polygon, etc.)
+- CAPA_WEBHOOK_SECRET
 
 ## Instalación y ejecución
 
@@ -37,11 +49,19 @@ bun run dev
 
 ## Comandos del agente (Telegram)
 
+### 🏦 Gestión de Alcancía
 - "crear alcancía" — Crea tu alcancía digital (wallet invisible)
 - "dirección" — Muestra la dirección de tu alcancía
 - "balance" o "saldo" — Muestra balance de ETH
 - "enviar <monto> <token?> a <0x...>" — Enviar tokens
 - "crear token" — Desplegar meme token (wrapper)
+
+### 💰 Capa Network (Fiat ↔ Crypto)
+- "comprar crypto" — Comprar criptomonedas con pesos/fiat
+- "comprar 100 USDC" — Comprar cantidad específica
+- "vender crypto" — Vender criptomonedas por fiat
+- "vender 50 USDC" — Vender cantidad específica
+- "estado transacciones capa" — Ver estado de transacciones Capa
 
 Notas:
 - La alcancía se liga 1:1 a tu usuario de Telegram.

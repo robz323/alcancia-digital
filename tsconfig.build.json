@@ -13,7 +13,8 @@
     "src/plugin.ts",
     "src/character.ts",
     "src/frontend/**/*.ts",
-    "src/frontend/**/*.tsx"
+    "src/frontend/**/*.tsx",
+    "src/services/**/*.ts"
   ],
   "exclude": [
     "node_modules",

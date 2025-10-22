@@ -13,9 +13,11 @@ import {
   Service,
   type State,
   logger,
+  ChannelType,
 } from '@elizaos/core';
 import { z } from 'zod';
 import { telegramStarknetStore, deploySmartAccountIfPossible, getEthBalanceWei, formatWeiToEth } from './services/telegram-starknet.ts';
+import { capaActions } from './services/capa-actions.ts';
 
 // Evitar respuestas duplicadas por mensajes repetidos en milisegundos
 const recentRouterHits = new Map<string, number>()
@@ -296,6 +298,22 @@ const plugin: Plugin = {
         const isTelegram = (message?.content as Content)?.source === 'telegram' || source === 'telegram'
 
         if (!isTelegram || !textLower) return
+        // Set worldId for Telegram messages if undefined, using agentId as a fallback
+        if (isTelegram && !message.worldId) message.worldId = runtime.agentId
+
+        // Ensure connection for Telegram messages to map room/world to central IDs
+        if (isTelegram && message.entityId && message.roomId && message.worldId) {
+          await runtime.ensureConnection({
+            entityId: message.entityId,
+            roomId: message.roomId,
+            // Use a generic name, as actual username might not be in `message` easily
+            userName: `telegram_user_${message.entityId}`,
+            name: `telegram_user_${message.entityId}`,
+            source: source || 'telegram',
+            worldId: message.worldId,
+            type: ChannelType.DM, // Assuming Direct Message for Telegram, adjust if needed
+          });
+        }
 
         // Debounce para no manejar duplicados inmediatos
         if (!shouldHandleOnce(message, textLower)) return
@@ -360,6 +378,62 @@ const plugin: Plugin = {
           await action.handler(runtime, message, { values: {}, data: {}, text: '' }, {}, callback, [])
           return
         }
+
+        // 6) Comprar crypto con Capa (On-Ramp)
+        if (
+          (textLower.includes('comprar') && (textLower.includes('crypto') || textLower.includes('usdc') || textLower.includes('ethereum'))) ||
+          (textLower.includes('buy') && textLower.includes('crypto')) ||
+          textLower.includes('onramp') ||
+          (textLower.includes('pesos') && textLower.includes('crypto'))
+        ) {
+          logger.info({ text }, '[Router] BUY_CRYPTO_WITH_CAPA matched')
+          const action = runtime.actions.find((a: Action) => a.name === 'BUY_CRYPTO_WITH_CAPA')
+          if (!action?.handler) return
+          if (!shouldRunActionOnce(message, 'BUY_CRYPTO_WITH_CAPA')) return
+          await action.handler(runtime, message, { values: {}, data: {}, text: '' }, {}, callback, [])
+          return
+        }
+
+        // 7) Vender crypto con Capa (Off-Ramp)
+        if (
+          (textLower.includes('vender') && (textLower.includes('crypto') || textLower.includes('usdc') || textLower.includes('ethereum'))) ||
+          (textLower.includes('sell') && textLower.includes('crypto')) ||
+          textLower.includes('offramp') ||
+          textLower.includes('convertir') ||
+          (textLower.includes('pesos') && (textLower.includes('vender') || textLower.includes('convertir')))
+        ) {
+          logger.info({ text }, '[Router] SELL_CRYPTO_WITH_CAPA matched')
+          const action = runtime.actions.find((a: Action) => a.name === 'SELL_CRYPTO_WITH_CAPA')
+          if (!action?.handler) return
+          if (!shouldRunActionOnce(message, 'SELL_CRYPTO_WITH_CAPA')) return
+          await action.handler(runtime, message, { values: {}, data: {}, text: '' }, {}, callback, [])
+          return
+        }
+
+        // 8) Estado de transacciones Capa
+        if (
+          (textLower.includes('estado') || textLower.includes('status') || textLower.includes('transaccion')) &&
+          (textLower.includes('capa') || textLower.includes('consultar'))
+        ) {
+          logger.info({ text }, '[Router] CHECK_CAPA_TRANSACTION matched')
+          const action = runtime.actions.find((a: Action) => a.name === 'CHECK_CAPA_TRANSACTION')
+          if (!action?.handler) return
+          if (!shouldRunActionOnce(message, 'CHECK_CAPA_TRANSACTION')) return
+          await action.handler(runtime, message, { values: {}, data: {}, text: '' }, {}, callback, [])
+          return
+        }
+
+        // Fallback: Si no se encuentra ninguna acción específica, se invoca la acción NONE
+        logger.info({ text }, '[Router] No specific action matched, falling back to NONE action')
+        const noneAction = runtime.actions.find((a: Action) => a.name === 'NONE')
+        if (!noneAction?.handler) {
+          logger.warn('[Router] NONE action handler not found!')
+          return // No fallback if NONE action is missing
+        }
+        if (!shouldRunActionOnce(message, 'NONE')) return
+        await noneAction.handler(runtime, message, { values: {}, data: {}, text: '' }, {}, callback, [])
+        return
+
       },
     ],
     VOICE_MESSAGE_RECEIVED: [
@@ -728,6 +802,8 @@ const plugin: Plugin = {
         ],
       ],
     },
+    // Add Capa Network actions
+    ...capaActions,
   ],
   providers: [helloWorldProvider],
 };
